@@ -34,7 +34,7 @@ module.exports = ({
 
 	// Kick off sync with platform
 	sprucebot.sync().catch(err => {
-		console.error(`Failed to sync your skill's settings with ${apiHost}`)
+		console.error(`Failed to sync your skill's settings with ${sprucebot.https.host}`)
 		console.error(err)
 	})
 
