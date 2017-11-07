@@ -166,10 +166,10 @@ module.exports = ({
 		}
 
 		router.post('/hook', async (ctx, next) => {
+			
 			const body = ctx.request.body
-			ctx.event = await ctx.sb.user(body.locationId, body.userId)
-
 			if(listenersByEventName[body.eventType]) {
+				ctx.event = await ctx.sb.user(body.locationId, body.userId)
 				await listenersByEventName[body.eventType](ctx, next)
 			}
 			next()
