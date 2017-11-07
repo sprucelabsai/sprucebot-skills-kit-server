@@ -169,7 +169,9 @@ module.exports = ({
 			const body = ctx.request.body
 			ctx.event = await ctx.sb.user(body.locationId, body.userId)
 
-			await listenersByEventName[body.eventType](ctx, next)
+			if(listenersByEventName[body.eventType]) {
+				await listenersByEventName[body.eventType](ctx, next)
+			}
 			next()
 		})
 
