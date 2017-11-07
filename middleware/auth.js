@@ -15,6 +15,7 @@ module.exports = router => {
 			try {
 				var decoded = jwt.verify(token, config.API_KEY.toString().toLowerCase())
 				ctx.auth = await ctx.sb.user(decoded.locationId, decoded.userId)
+				ctx.auth.jwt = token
 			} catch (err) {
 				ctx.throw('INVALID_AUTHENTICATION')
 			}

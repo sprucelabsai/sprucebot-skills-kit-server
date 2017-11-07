@@ -91,6 +91,7 @@ module.exports = ({
 				errorResponse.path = ctx.path;
 				ctx.status = errorResponse.code
 				ctx.body = errorResponse
+				console.error(err)
 			}
 		})
 
