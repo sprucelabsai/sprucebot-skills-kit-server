@@ -10,7 +10,8 @@ module.exports = router => {
 			id = null
 		}
 
-		let token = id || ctx.cookies.get('jwt') || ctx.request.headers['x-skill-jwt']
+		let token =
+			id || ctx.cookies.get('jwt') || ctx.request.headers['x-skill-jwt']
 		if (token) {
 			try {
 				var decoded = jwt.verify(token, config.API_KEY.toString().toLowerCase())
