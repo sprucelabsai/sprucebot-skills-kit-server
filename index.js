@@ -7,6 +7,7 @@ const { version } = require('./package.json')
 const defaultErrors = require('./support/errors')
 const glob = require('glob')
 const path = require('path')
+const cors = require('@koa/cors')
 
 const required = key => {
 	throw new Error(`SkillKit server needs ${key}`)
@@ -23,7 +24,7 @@ module.exports = ({
 	utilitiesDir = required('utilitiesDir'),
 	controllersDir = required('controllersDir'),
 	middlewareDir = required('middlewareDir'),
-	listenersDir = required('listenersDir'),
+	listenersDir = required('listenersDir')
 }) => {
 	// you can override error messages
 	const allErrors = { ...defaultErrors, ...errors }
@@ -34,20 +35,26 @@ module.exports = ({
 
 	// Kick off sync with platform
 	sprucebot.sync().catch(err => {
-		console.error(`Failed to sync your skill's settings with ${sprucebot.https.host}`)
+		console.error(
+			`Failed to sync your skill's settings with ${sprucebot.https.host}`
+		)
 		console.error(err)
 	})
 
 	app.prepare().then(async () => {
 		const koa = new Koa()
+
+		/*=======================================
+        =            		Cors	            =
+        =======================================*/
+		koa.use(cors())
+
 		const router = new Router()
 
 		/*=======================================
-        =            Utilities/Services          =
+        =            Utilities/Services         =
         =======================================*/
 		try {
-
-
 			// services for skills-kit
 			sprucebot.skillskit.factories.context(
 				servicesDir,
@@ -87,8 +94,11 @@ module.exports = ({
 			try {
 				await next()
 			} catch (err) {
-				const errorResponse = Object.assign({},allErrors[err.message] || allErrors['UNKNOWN'])
-				errorResponse.path = ctx.path;
+				const errorResponse = Object.assign(
+					{},
+					allErrors[err.message] || allErrors['UNKNOWN']
+				)
+				errorResponse.path = ctx.path
 				ctx.status = errorResponse.code
 				ctx.body = errorResponse
 				console.error(err)
@@ -97,7 +107,6 @@ module.exports = ({
 
 		// middleware
 		try {
-
 			// build-in
 			sprucebot.skillskit.factories.wares(
 				path.join(__dirname, 'middleware'),
@@ -105,10 +114,7 @@ module.exports = ({
 			)
 
 			// skills-kit
-			sprucebot.skillskit.factories.wares(
-				middlewareDir,
-				router
-			)
+			sprucebot.skillskit.factories.wares(middlewareDir, router)
 		} catch (err) {
 			console.error('Failed to boot middleware', err)
 		}
@@ -143,11 +149,13 @@ module.exports = ({
         ======================================*/
 		try {
 			// built-in routes
-			sprucebot.skillskit.factories.routes(path.join(__dirname, 'controllers'), router)
+			sprucebot.skillskit.factories.routes(
+				path.join(__dirname, 'controllers'),
+				router
+			)
 
 			// skills-kit routes
 			sprucebot.skillskit.factories.routes(controllersDir, router)
-			
 		} catch (err) {
 			console.error('Loading controllers failed.')
 			console.error(err)
@@ -167,9 +175,8 @@ module.exports = ({
 		}
 
 		router.post('/hook', async (ctx, next) => {
-			
 			const body = ctx.request.body
-			if(listenersByEventName[body.eventType]) {
+			if (listenersByEventName[body.eventType]) {
 				ctx.event = await ctx.sb.user(body.locationId, body.userId)
 				await listenersByEventName[body.eventType](ctx, next)
 			}

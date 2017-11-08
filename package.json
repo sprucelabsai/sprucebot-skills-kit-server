@@ -5,9 +5,11 @@
         "lint": "eslint '**/**/*{.js}'",
         "test": "jest --coverage",
         "precommit": "npm run lint",
-        "prepush": "npm run lint && npm run test"
+        "prepush": "npm run lint && npm run test",
+        "lint": "./node_modules/.bin/eslint --fix '**/**/*{.js,.scss}'"
     },
     "dependencies": {
+        "@koa/cors": "2",
         "config": "^1.28.0",
         "cookies": "^0.7.1",
         "glob": "^7.1.2",
