@@ -1,12 +1,11 @@
 {
     "name": "sprucebot-skills-kit-server",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "scripts": {
-        "lint": "eslint '**/**/*{.js}'",
+        "lint": "./node_modules/.bin/eslint --fix '**/**/*{.js,.scss}'",
         "test": "jest --coverage",
         "precommit": "npm run lint",
-        "prepush": "npm run lint && npm run test",
-        "lint": "./node_modules/.bin/eslint --fix '**/**/*{.js,.scss}'"
+        "prepush": "npm run lint && npm run test"
     },
     "dependencies": {
         "@koa/cors": "2",
