@@ -179,6 +179,7 @@ module.exports = ({
 			if (listenersByEventName[body.eventType]) {
 				ctx.event = await ctx.sb.user(body.locationId, body.userId)
 				await listenersByEventName[body.eventType](ctx, next)
+				return
 			}
 			next()
 		})
