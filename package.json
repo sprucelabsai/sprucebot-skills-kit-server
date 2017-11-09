@@ -1,6 +1,6 @@
 {
     "name": "sprucebot-skills-kit-server",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "scripts": {
         "lint": "./node_modules/.bin/eslint --fix '**/**/*{.js,.scss}'",
         "test": "jest --coverage",
