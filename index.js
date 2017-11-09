@@ -8,6 +8,7 @@ const defaultErrors = require('./support/errors')
 const glob = require('glob')
 const path = require('path')
 const cors = require('@koa/cors')
+const staticServe = require('koa-static')
 
 const required = key => {
 	throw new Error(`SkillKit server needs ${key}`)
@@ -24,7 +25,8 @@ module.exports = ({
 	utilitiesDir = required('utilitiesDir'),
 	controllersDir = required('controllersDir'),
 	middlewareDir = required('middlewareDir'),
-	listenersDir = required('listenersDir')
+	listenersDir = required('listenersDir'),
+	staticDir = false
 }) => {
 	// you can override error messages
 	const allErrors = { ...defaultErrors, ...errors }
@@ -45,9 +47,11 @@ module.exports = ({
 		const koa = new Koa()
 
 		/*=======================================
-        =            		Cors	            =
+        =            		BASICS	            =
         =======================================*/
 		koa.use(cors())
+		koa.use(bodyParser())
+		staticDir && koa.use(staticServe(staticDir))
 
 		const router = new Router()
 
@@ -79,7 +83,6 @@ module.exports = ({
 		cronController(cron)
 
 		// POST support
-		koa.use(bodyParser())
 
 		/*=========================================
         =            	Middleware	              =
