@@ -26,6 +26,7 @@ module.exports = ({
 	controllersDir = required('controllersDir'),
 	middlewareDir = required('middlewareDir'),
 	listenersDir = required('listenersDir'),
+	langDir = required('langDir'),
 	staticDir = false
 }) => {
 	// you can override error messages
@@ -47,7 +48,7 @@ module.exports = ({
 		const koa = new Koa()
 
 		/*=======================================
-        =            		BASICS	            =
+        =             	BASICS   	            =
         =======================================*/
 		koa.use(cors())
 		koa.use(bodyParser())
@@ -74,6 +75,14 @@ module.exports = ({
 		} catch (err) {
 			console.error('Leading services & utilities failed.')
 			console.error(err)
+			throw err
+		}
+
+		/*=======================================
+        =             	LANG	   	            =
+        =======================================*/
+		if (langDir) {
+			sprucebot.skillskit.lang.configure(langDir)
 		}
 
 		/*======================================
@@ -82,13 +91,14 @@ module.exports = ({
 		const cronController = require(path.join(controllersDir, 'cron'))
 		cronController(cron)
 
-		// POST support
-
 		/*=========================================
         =            	Middleware	              =
         =========================================*/
 		koa.use(async (ctx, next) => {
+			// make Sprucebot available
 			ctx.sb = sprucebot
+			// make translation available
+			ctx.getText = sprucebot.skillskit.lang.get.bind(sprucebot.skillskit.lang)
 			await next()
 		})
 
@@ -162,6 +172,7 @@ module.exports = ({
 		} catch (err) {
 			console.error('Loading controllers failed.')
 			console.error(err)
+			throw err
 		}
 
 		/*======================================
