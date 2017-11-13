@@ -2,6 +2,7 @@ const Koa = require('koa')
 const next = require('next')
 const Router = require('koa-router')
 const cron = require('node-cron')
+const _ = require('lodash')
 const bodyParser = require('koa-bodyparser')
 const { version } = require('./package.json')
 const defaultErrors = require('./support/errors')
@@ -57,32 +58,51 @@ module.exports = ({
 		const router = new Router()
 
 		/*=======================================
-        =            Utilities/Services         =
+        =        Utilities/Services/Lang        =
         =======================================*/
 		try {
+			// make lang available via utilities
+			if (langDir) {
+				sprucebot.skillskit.lang.configure(langDir)
+				koa.context.utilities = { lang: sprucebot.skillskit.lang }
+			}
+
 			// services for skills-kit
 			sprucebot.skillskit.factories.context(
 				servicesDir,
 				'services',
 				koa.context
 			)
+
+			// utilities for core
+			sprucebot.skillskit.factories.context(
+				path.join(__dirname, 'utilities'),
+				'utilities',
+				koa.context
+			)
+
 			// utilities for skills-kit
 			sprucebot.skillskit.factories.context(
 				utilitiesDir,
 				'utilities',
 				koa.context
 			)
+
+			// make sure services and utilities can access each other
+			_.each(koa.context.services, service => {
+				service.services = koa.context.services
+				service.utilities = koa.context.utilities
+				service.sb = sprucebot
+			})
+			_.each(koa.context.utilities, util => {
+				util.utilities = koa.context.utilities
+				util.services = koa.context.services
+				util.sb = sprucebot
+			})
 		} catch (err) {
 			console.error('Leading services & utilities failed.')
 			console.error(err)
 			throw err
-		}
-
-		/*=======================================
-        =             	LANG	   	            =
-        =======================================*/
-		if (langDir) {
-			sprucebot.skillskit.lang.configure(langDir)
 		}
 
 		/*======================================
@@ -97,8 +117,7 @@ module.exports = ({
 		koa.use(async (ctx, next) => {
 			// make Sprucebot available
 			ctx.sb = sprucebot
-			// make translation available
-			ctx.getText = sprucebot.skillskit.lang.get.bind(sprucebot.skillskit.lang)
+
 			await next()
 		})
 
@@ -176,7 +195,7 @@ module.exports = ({
 		}
 
 		/*======================================
-        =         		Event Listeners          =
+        =         	Event Listeners       	   =
         ======================================*/
 		let listenersByEventName
 		try {
@@ -190,12 +209,37 @@ module.exports = ({
 
 		router.post('/hook', async (ctx, next) => {
 			const body = ctx.request.body
+
+			// only fire if we are listening to this event
 			if (listenersByEventName[body.eventType]) {
-				ctx.event = await ctx.sb.user(body.locationId, body.userId)
+				const userId = body.userId || (body.payload && body.payload.userId)
+
+				// is a user and location part of this event?
+				if (userId && body.locationId) {
+					ctx.event = await ctx.sb.user(body.locationId, userId)
+				} else if (body.locationId) {
+					// just a location
+					const location = await ctx.sb.location(body.locationId)
+					ctx.event = {
+						Location: location
+					}
+				}
+
+				if (body.payload) {
+					ctx.event.payload = body.payload
+				}
+
 				await listenersByEventName[body.eventType](ctx, next)
-				return
+
+				// core will ignore this
+				if (!ctx.body) {
+					ctx.body = { ignore: true }
+				}
+			} else {
+				// no listener, ignore here
+				ctx.body = { ignore: true }
+				next()
 			}
-			next()
 		})
 
 		/*======================================
@@ -226,9 +270,10 @@ module.exports = ({
 					ctx.res.end = _end
 					ctx.res.removeListener('pipe', pipe)
 					if (ctx.res.redirect) {
-						ctx.redirect(ctx.res.redirect)
 						body = `Redirecting to ${ctx.res.redirect}`
-						ctx.res.end()
+						ctx.redirect(ctx.res.redirect)
+						ctx.res.end(body)
+						return
 					}
 					resolve(body)
 				}
