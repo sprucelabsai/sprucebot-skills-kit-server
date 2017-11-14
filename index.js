@@ -294,6 +294,10 @@ module.exports = ({
 			if (ctx.body || ctx.path.search('/api') === 0) {
 				return
 			}
+			debug('handing off to next and backing off', ctx.path)
+			handle(ctx.req, ctx.res)
+			ctx.respond = false
+			return
 			ctx.body = await new Promise(resolve => {
 				const _end = ctx.res.end
 				ctx.res._end = _end
