@@ -11,6 +11,7 @@
         "@koa/cors": "2",
         "config": "^1.28.0",
         "cookies": "^0.7.1",
+        "debug": "^3.1.0",
         "glob": "^7.1.2",
         "jsonwebtoken": "^8.1.0",
         "koa": "^2.4.1",
