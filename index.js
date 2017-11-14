@@ -182,7 +182,12 @@ module.exports = ({
 			if (!ctx.res.headersSent) {
 				ctx.set('X-Response-Time', `${ms}ms`)
 				ctx.set('X-Powered-By', `Sprucebot v${version}`)
-				debug('x-headers set at end of response')
+				debug('x-headers set at end of response', ctx.path)
+			} else {
+				debug(
+					'x-headers ignored since headers have already been sent',
+					ctx.path
+				)
 			}
 		})
 
