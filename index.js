@@ -250,6 +250,8 @@ module.exports = ({
 
 			// only fire if we are listening to this event
 			if (listenersByEventName[body.eventType]) {
+				debug('Listener found')
+
 				const userId = body.userId || (body.payload && body.payload.userId)
 
 				// is a user and location part of this event?
@@ -263,13 +265,19 @@ module.exports = ({
 					}
 				}
 
-				if (body.payload) {
+				if (ctx.event && body && body.payload) {
 					ctx.event.payload = body.payload
 				}
 
-				debug('Listener found', ctx.event)
-
-				await listenersByEventName[body.eventType](ctx, next)
+				if (ctx.event) {
+					debug('Event listener firing', ctx.event)
+					await listenersByEventName[body.eventType](ctx, next)
+				} else {
+					debug(
+						'Event body malformed or non-existent, skipping with body',
+						body
+					)
+				}
 
 				// core will ignore this
 				if (!ctx.body) {
