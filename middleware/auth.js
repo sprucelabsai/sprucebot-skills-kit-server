@@ -47,7 +47,7 @@ module.exports = router => {
 
 	router.use('/api/*/guest/*', async (ctx, next) => {
 		let role = ctx.auth && ctx.auth.role
-		if (role) {
+		if (!role) {
 			ctx.throw('NOT_AUTHORIZED')
 		}
 		await next()
