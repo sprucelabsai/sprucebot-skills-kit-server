@@ -14,14 +14,14 @@ module.exports = router => {
 		let token =
 			id || ctx.cookies.get('jwt') || ctx.request.headers['x-skill-jwt']
 		if (token) {
-			debug(`middleware/auth found token at ${ctx.path}, checking`)
+			debug(`middleware/auth found token checking`)
 			try {
 				var decoded = jwt.verify(token, config.API_KEY.toString().toLowerCase())
 				ctx.auth = await ctx.sb.user(decoded.locationId, decoded.userId)
 				ctx.auth.jwt = token
-				debug(`middleware/auth token valid at ${ctx.path}`)
+				debug(`MIDDLEWARE/AUTH ERROR: token valid`)
 			} catch (err) {
-				debug(`middleware/auth token invalid at ${ctx.path}`)
+				debug(`middleware/auth token ${token}`)
 				ctx.throw('INVALID_AUTHENTICATION')
 			}
 		} else {
@@ -38,7 +38,7 @@ module.exports = router => {
 	router.use('/api/*/teammate/*', async (ctx, next) => {
 		let role = ctx.auth && ctx.auth.role
 		if (role !== 'teammate' && role !== 'owner') {
-			debug(`middleware/auth denied access to ${ctx.path} for role: '${role}' `)
+			debug(`MIDDLEWARE/AUTH ACCESS DENIED: ${ctx.path} for role: '${role}' `)
 			ctx.throw('NOT_AUTHORIZED')
 		}
 		await next()
@@ -47,7 +47,7 @@ module.exports = router => {
 	router.use('/api/*/owner/*', async (ctx, next) => {
 		let role = ctx.auth && ctx.auth.role
 		if (role !== 'owner') {
-			debug(`middleware/auth denied access to ${ctx.path} for role: '${role}' `)
+			debug(`MIDDLEWARE/AUTH ACCESS DENIED: ${ctx.path} for role: '${role}' `)
 			ctx.throw('NOT_AUTHORIZED')
 		}
 		await next()
@@ -56,7 +56,7 @@ module.exports = router => {
 	router.use('/api/*/guest/*', async (ctx, next) => {
 		let role = ctx.auth && ctx.auth.role
 		if (!role) {
-			debug(`middleware/auth denied access to ${ctx.path} for role: '${role}' `)
+			debug(`MIDDLEWARE/AUTH ACCESS DENIED: ${ctx.path} for role: '${role}' `)
 			ctx.throw('NOT_AUTHORIZED')
 		}
 		await next()
