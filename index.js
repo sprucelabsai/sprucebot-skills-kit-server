@@ -11,6 +11,11 @@ const glob = require('glob')
 const path = require('path')
 const cors = require('@koa/cors')
 const staticServe = require('koa-static')
+const contextFactory = require('./factories/context')
+const routesFactory = require('./factories/routes')
+const waresFactory = require('./factories/wares')
+const listenersFactory = require('./factories/listeners')
+const lang = require('./helpers/lang')
 
 const required = key => {
 	throw new Error(`SkillKit server needs ${key}`)
@@ -29,7 +34,8 @@ module.exports = ({
 	middlewareDir = required('middlewareDir'),
 	listenersDir = required('listenersDir'),
 	langDir = required('langDir'),
-	staticDir = false
+	staticDir = false,
+	bodyParserOptions = { jsonLimit: '1mb' }
 }) => {
 	debug('Starting server boot sequence with port', port)
 	// you can override error messages
@@ -55,7 +61,7 @@ module.exports = ({
         =             	BASICS   	            =
         =======================================*/
 		koa.use(cors())
-		koa.use(bodyParser())
+		koa.use(bodyParser(bodyParserOptions))
 		staticDir && koa.use(staticServe(staticDir))
 
 		const router = new Router()
@@ -67,25 +73,24 @@ module.exports = ({
 			// make lang available via utilities
 			if (langDir) {
 				debug('langDir detected at', langDir)
-				sprucebot.skillskit.lang.configure(langDir)
-				koa.context.utilities = { lang: sprucebot.skillskit.lang }
+				lang.configure(langDir)
+				koa.context.utilities = { lang }
 			} else {
 				debug(
 					'No landDir detected. ctx.utilities.lang.getText() will fail sever side'
 				)
 			}
 
-			// services for skills-kit
-			sprucebot.skillskit.factories.context(
-				servicesDir,
-				'services',
-				koa.context
-			)
+			// services for core
+			contextFactory(path.join(__dirname, 'services'), 'services', koa.context)
+
+			// services for skill
+			contextFactory(servicesDir, 'services', koa.context)
 
 			debug('Kit services loaded')
 
 			// utilities for core
-			sprucebot.skillskit.factories.context(
+			contextFactory(
 				path.join(__dirname, 'utilities'),
 				'utilities',
 				koa.context
@@ -94,11 +99,7 @@ module.exports = ({
 			debug('Core utilities loaded')
 
 			// utilities for skills-kit
-			sprucebot.skillskit.factories.context(
-				utilitiesDir,
-				'utilities',
-				koa.context
-			)
+			contextFactory(utilitiesDir, 'utilities', koa.context)
 
 			debug('Kit utilities loaded')
 
@@ -150,22 +151,19 @@ module.exports = ({
 				errorResponse.path = ctx.path
 				ctx.status = errorResponse.code
 				ctx.body = errorResponse
-				console.error(err)
+				console.error(err.stack || err)
 			}
 		})
 
 		// middleware
 		try {
 			// build-in
-			sprucebot.skillskit.factories.wares(
-				path.join(__dirname, 'middleware'),
-				router
-			)
+			waresFactory(path.join(__dirname, 'middleware'), router)
 
 			debug('Core middleware loaded')
 
 			// skills-kit
-			sprucebot.skillskit.factories.wares(middlewareDir, router)
+			waresFactory(middlewareDir, router)
 
 			debug('Kit middleware loaded')
 		} catch (err) {
@@ -209,15 +207,12 @@ module.exports = ({
         ======================================*/
 		try {
 			// built-in routes
-			sprucebot.skillskit.factories.routes(
-				path.join(__dirname, 'controllers'),
-				router
-			)
+			routesFactory(path.join(__dirname, 'controllers'), router)
 
 			debug('Core controllers loaded')
 
 			// skills-kit routes
-			sprucebot.skillskit.factories.routes(controllersDir, router)
+			routesFactory(controllersDir, router)
 
 			debug('Kit controllers loaded')
 		} catch (err) {
@@ -231,16 +226,14 @@ module.exports = ({
         ======================================*/
 		let listenersByEventName
 		try {
-			listenersByEventName = sprucebot.skillskit.factories.listeners(
-				listenersDir
-			)
+			listenersByEventName = listenersFactory(listenersDir)
 			debug(
 				'Event listeners found for events',
 				Object.keys(listenersByEventName)
 			)
 		} catch (err) {
 			console.error('Loading event listeners failed.')
-			console.error(err)
+			console.error(err.stack || err)
 		}
 
 		router.post('/hook', async (ctx, next) => {

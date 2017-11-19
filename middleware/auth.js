@@ -19,9 +19,9 @@ module.exports = router => {
 				var decoded = jwt.verify(token, config.API_KEY.toString().toLowerCase())
 				ctx.auth = await ctx.sb.user(decoded.locationId, decoded.userId)
 				ctx.auth.jwt = token
-				debug(`MIDDLEWARE/AUTH ERROR: token valid`)
+				debug(`middleware/auth token valid`)
 			} catch (err) {
-				debug(`middleware/auth token ${token}`)
+				debug(`MIDDLEWARE/AUTH INVALID TOKEN: ${token}`, err)
 				ctx.throw('INVALID_AUTHENTICATION')
 			}
 		} else {
