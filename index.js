@@ -263,6 +263,7 @@ module.exports = ({
 				}
 
 				if (ctx.event) {
+					ctx.event.name = body.eventType // pass through event name
 					debug('Event listener firing', ctx.event)
 					await listenersByEventName[body.eventType](ctx, next)
 				} else {
