@@ -1,7 +1,7 @@
 {
     "name": "sprucebot-skills-kit-server",
     "description": "The engine that drives your Sprucebot Skill! 🌲🤖",
-    "version": "0.5.2",
+    "version": "0.6.0",
     "scripts": {
         "lint": "./node_modules/.bin/eslint --fix '**/**/*{.js,.scss}'",
         "test": "jest --coverage",
