@@ -442,7 +442,7 @@ module.exports = {
     ...,
     services: {
         uploads: {
-            uploader: path.join(__dirname, '../services/ftp.js'),
+            uploader: path.join(__dirname, '../server/services/ftp.js'),
             options: {
                 endpoint: process.env.FTP_ENDPOINT,
                 path: process.env.FTP_PATH

@@ -1,4 +1,4 @@
-var debug = require('debug')('sprucebot-skills-kit-server')
+const debug = require('debug')('sprucebot-skills-kit-server')
 const Koa = require('koa')
 const next = require('next')
 const Router = require('koa-router')
@@ -130,6 +130,21 @@ module.exports = ({
 		cronController(cron)
 		debug('CronController running')
 
+		/*======================================
+        =         	Event Listeners       	   =
+        ======================================*/
+		let listenersByEventName
+		try {
+			listenersByEventName = listenersFactory(listenersDir)
+			debug(
+				'Event listeners found for events',
+				Object.keys(listenersByEventName)
+			)
+		} catch (err) {
+			console.error('Loading event listeners failed.')
+			console.error(err.stack || err)
+		}
+
 		/*=========================================
         =            	Middleware	              =
         =========================================*/
@@ -144,10 +159,18 @@ module.exports = ({
 			try {
 				await next()
 			} catch (err) {
-				const errorResponse = Object.assign(
-					{},
-					allErrors[err.message] || allErrors['UNKNOWN']
-				)
+				const errorResponse = {
+					...(allErrors[err.message] || allErrors['UNKNOWN'])
+				}
+
+				// anything in the error thrown that matches these
+				// keys, lets set back to the error
+				for (let key of ['code', 'friendlyReason']) {
+					if (err[key]) {
+						errorResponse[key] = err[key]
+					}
+				}
+
 				errorResponse.path = ctx.path
 				ctx.status = errorResponse.code
 				ctx.body = errorResponse
@@ -155,15 +178,19 @@ module.exports = ({
 			}
 		})
 
-		// middleware
+		/*======================================
+        =         	Core/Kit Middleware.       =
+        ======================================*/
 		try {
 			// build-in
-			waresFactory(path.join(__dirname, 'middleware'), router)
+			waresFactory(path.join(__dirname, 'middleware'), router, {
+				listenersByEventName
+			})
 
 			debug('Core middleware loaded')
 
 			// skills-kit
-			waresFactory(middlewareDir, router)
+			waresFactory(middlewareDir, router, { listenersByEventName })
 
 			debug('Kit middleware loaded')
 		} catch (err) {
@@ -207,12 +234,14 @@ module.exports = ({
         ======================================*/
 		try {
 			// built-in routes
-			routesFactory(path.join(__dirname, 'controllers'), router)
+			routesFactory(path.join(__dirname, 'controllers'), router, {
+				listenersByEventName
+			})
 
 			debug('Core controllers loaded')
 
 			// skills-kit routes
-			routesFactory(controllersDir, router)
+			routesFactory(controllersDir, router, { listenersByEventName })
 
 			debug('Kit controllers loaded')
 		} catch (err) {
@@ -220,70 +249,6 @@ module.exports = ({
 			console.error(err)
 			throw err
 		}
-
-		/*======================================
-        =         	Event Listeners       	   =
-        ======================================*/
-		let listenersByEventName
-		try {
-			listenersByEventName = listenersFactory(listenersDir)
-			debug(
-				'Event listeners found for events',
-				Object.keys(listenersByEventName)
-			)
-		} catch (err) {
-			console.error('Loading event listeners failed.')
-			console.error(err.stack || err)
-		}
-
-		router.post('/hook', async (ctx, next) => {
-			const body = ctx.request.body
-
-			debug('Event trigger', body.eventType)
-
-			// only fire if we are listening to this event
-			if (listenersByEventName[body.eventType]) {
-				debug('Listener found')
-
-				const userId = body.userId || (body.payload && body.payload.userId)
-
-				// is a user and location part of this event?
-				if (userId && body.locationId) {
-					ctx.event = await ctx.sb.user(body.locationId, userId)
-				} else if (body.locationId) {
-					// just a location
-					const location = await ctx.sb.location(body.locationId)
-					ctx.event = {
-						Location: location
-					}
-				}
-
-				if (ctx.event && body && body.payload) {
-					ctx.event.payload = body.payload
-				}
-
-				if (ctx.event) {
-					ctx.event.name = body.eventType // pass through event name
-					debug('Event listener firing', ctx.event)
-					await listenersByEventName[body.eventType](ctx, next)
-				} else {
-					debug(
-						'Event body malformed or non-existent, skipping with body',
-						body
-					)
-				}
-
-				// core will ignore this
-				if (!ctx.body) {
-					ctx.body = { ignore: true }
-				}
-			} else {
-				debug('No listeners found, ignoring')
-				// no listener, ignore here
-				ctx.body = { ignore: true }
-				next()
-			}
-		})
 
 		/*======================================
         =          Client Side Routes          =
@@ -300,6 +265,8 @@ module.exports = ({
 			handle(ctx.req, ctx.res)
 			ctx.respond = false
 			return
+
+			// this does not work as desired
 			ctx.body = await new Promise(resolve => {
 				const _end = ctx.res.end
 				ctx.res._end = _end
