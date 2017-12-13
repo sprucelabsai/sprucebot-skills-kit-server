@@ -18,11 +18,12 @@ module.exports = (dir, router) => {
 		if (shortName.search(path.sep) > -1) {
 			// custom event
 			eventName = shortName.replace(/[\/\\]/gi, ':')
+			ctx[eventName] = require(match)
 		} else {
 			// coe events are camel case because I DON'T KNOW
 			eventName = camelCase(shortName)
+			ctx[eventName] = ctx[shortName] = require(match)
 		}
-		ctx[eventName] = require(match)
 
 		return ctx
 	}, {})
