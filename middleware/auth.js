@@ -31,10 +31,10 @@ module.exports = router => {
 		await next()
 	}
 
-	router.use('*.json', auth)
 	router.param('jwt', auth)
 
 	// authorize paths for team, owner, and guest
+	router.use('/api/*/teammate/*', auth)
 	router.use('/api/*/teammate/*', async (ctx, next) => {
 		let role = ctx.auth && ctx.auth.role
 		if (role !== 'teammate' && role !== 'owner') {
@@ -44,6 +44,7 @@ module.exports = router => {
 		await next()
 	})
 
+	router.use('/api/*/owner/*', auth)
 	router.use('/api/*/owner/*', async (ctx, next) => {
 		let role = ctx.auth && ctx.auth.role
 		if (role !== 'owner') {
@@ -53,6 +54,7 @@ module.exports = router => {
 		await next()
 	})
 
+	router.use('/api/*/guest/*', auth)
 	router.use('/api/*/guest/*', async (ctx, next) => {
 		let role = ctx.auth && ctx.auth.role
 		if (!role) {
