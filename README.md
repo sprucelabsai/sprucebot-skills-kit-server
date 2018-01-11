@@ -1,4 +1,6 @@
 # `sprucebot-skills-kit-server`
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/sprucelabsai/sprucebot-skills-kit-server.svg)](https://greenkeeper.io/)
 This module relies heavily on [koajs](http://koajs.com) and [koa-router](https://github.com/alexmingoia/koa-router). It can help to be familiar with those modules, but it's probably not 100% necessary.
 
 ## Where to start?
