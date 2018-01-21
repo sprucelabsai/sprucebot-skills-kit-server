@@ -1,19 +1,31 @@
 const debug = require('debug')('sprucebot-skills-kit-server')
+const jwt = require('jsonwebtoken')
+const config = require('config')
 
 module.exports = (router, options) => {
 	const listenersByEventName = options.listenersByEventName
 
 	router.use(async (ctx, next) => {
-		const body = ctx.request.body
+		let body = ctx.request.body
+		const eventName = body && body.event
 
 		// setup if we are listening to this event
 		if (
 			ctx.path === '/hook.json' &&
 			body &&
-			body.eventType &&
-			listenersByEventName[body.eventType]
+			eventName &&
+			listenersByEventName[eventName]
 		) {
-			debug('router.use for event', body.eventType)
+			// lets make sure the data is signed pro
+			try {
+				body = jwt.verify(body.data, config.API_KEY.toString().toLowerCase())
+			} catch (err) {
+				debug('IMPROPERLY SIGNED PAYLOAD FOR EVENT. IGNORING')
+				next()
+				return
+			}
+
+			debug('router.use for event', body.event)
 			debug('Listener found, adding event to ctx')
 
 			const userId = body.userId || (body.payload && body.payload.userId)
@@ -34,8 +46,10 @@ module.exports = (router, options) => {
 			}
 
 			if (ctx.event) {
-				ctx.event.name = body.eventType // pass through event name
+				ctx.event.name = eventName // pass through event name
 			}
+		} else {
+			debug('No listener found for', body.event)
 		}
 
 		await next()

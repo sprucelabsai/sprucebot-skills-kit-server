@@ -6,13 +6,13 @@ module.exports = (router, options) => {
 	router.post('/hook.json', async (ctx, next) => {
 		const body = ctx.request.body
 
-		debug('Event trigger', body.eventType)
+		debug('Event trigger', body.name)
 
 		// only fire if we are listening to this event
-		if (listenersByEventName[body.eventType] && ctx.event) {
-			ctx.event.name = body.eventType // pass through event name
+		if (listenersByEventName[body.name] && ctx.event) {
+			ctx.event.name = body.name // pass through event name
 			debug('Event listener firing', ctx.event)
-			await listenersByEventName[body.eventType](ctx, next)
+			await listenersByEventName[body.name](ctx, next)
 
 			// core will ignore this
 			if (!ctx.body) {
