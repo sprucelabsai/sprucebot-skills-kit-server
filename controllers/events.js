@@ -4,24 +4,19 @@ module.exports = (router, options) => {
 	const listenersByEventName = options.listenersByEventName
 
 	router.post('/hook.json', async (ctx, next) => {
-		const body = ctx.request.body
-
-		debug('Event trigger', body.name)
-
 		// only fire if we are listening to this event
-		if (listenersByEventName[body.name] && ctx.event) {
-			ctx.event.name = body.name // pass through event name
-			debug('Event listener firing', ctx.event)
-			await listenersByEventName[body.name](ctx, next)
+		if (ctx.event) {
+			debug('Event listener firing', ctx.event.name)
+			await listenersByEventName[ctx.event.name](ctx, next)
 
 			// core will ignore this
 			if (!ctx.body) {
-				ctx.body = { ignore: true }
+				ctx.body = { status: 'success', ignore: true }
 			}
 		} else {
 			debug('No listeners found, ignoring')
 			// no listener, ignore here
-			ctx.body = { ignore: true }
+			ctx.body = { status: 'success', ignore: true }
 			next()
 		}
 	})

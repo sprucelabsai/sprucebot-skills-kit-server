@@ -25,7 +25,7 @@ module.exports = (router, options) => {
 				return
 			}
 
-			debug('router.use for event', body.event)
+			debug('router.use for event', eventName)
 			debug('Listener found, adding event to ctx')
 
 			const userId = body.userId || (body.payload && body.payload.userId)
