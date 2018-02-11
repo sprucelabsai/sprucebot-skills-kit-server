@@ -127,7 +127,7 @@ module.exports = ({
         =            	Cron	        	   =
         ======================================*/
 		const cronController = require(path.join(controllersDir, 'cron'))
-		cronController(cron)
+		cronController({ ...koa.context, sb: sprucebot }, cron)
 		debug('CronController running')
 
 		/*======================================
