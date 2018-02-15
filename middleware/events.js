@@ -37,7 +37,16 @@ module.exports = (router, options) => {
 				// just a location
 				const location = await ctx.sb.location(body.locationId)
 				ctx.event = {
+					LocationId: location.id,
 					Location: location
+				}
+			} else if (userId && config.get('GLOBAL')) {
+				// just user id if global
+				debug('Global skill handling event')
+				const user = await ctx.sb.globalUser(userId)
+				ctx.event = {
+					User: user,
+					UserId: user.id
 				}
 			}
 
@@ -48,7 +57,7 @@ module.exports = (router, options) => {
 			if (ctx.event) {
 				ctx.event.name = eventName // pass through event name
 			}
-		} else {
+		} else if (ctx.path === '/hook.json' && eventName) {
 			debug('No listener found for', eventName)
 		}
 
