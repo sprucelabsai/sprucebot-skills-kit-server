@@ -49,7 +49,7 @@ module.exports = (router, options) => {
 				ctx.event.name = eventName // pass through event name
 			}
 		} else {
-			debug('No listener found for', body.event)
+			debug('No listener found for', eventName)
 		}
 
 		await next()
