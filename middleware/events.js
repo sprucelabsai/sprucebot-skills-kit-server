@@ -40,7 +40,7 @@ module.exports = (router, options) => {
 					LocationId: location.id,
 					Location: location
 				}
-			} else if (userId && config.get('GLOBAL')) {
+			} else if (userId && config.has('GLOBAL') && config.get('GLOBAL')) {
 				// just user id if global
 				debug('Global skill handling event')
 				const user = await ctx.sb.globalUser(userId)
