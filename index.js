@@ -159,8 +159,10 @@ module.exports = ({
 			try {
 				await next()
 			} catch (err) {
+				const errKey = allErrors[err.message] ? err.message : 'UNKNOWN'
 				const errorResponse = {
-					...(allErrors[err.message] || allErrors['UNKNOWN'])
+					...allErrors[errKey],
+					name: errKey
 				}
 
 				// anything in the error thrown that matches these
