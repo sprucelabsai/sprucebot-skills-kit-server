@@ -48,6 +48,8 @@ module.exports = (router, options) => {
 					User: user,
 					UserId: user.id
 				}
+			} else {
+				ctx.event = {}
 			}
 
 			if (ctx.event && body && body.payload) {
