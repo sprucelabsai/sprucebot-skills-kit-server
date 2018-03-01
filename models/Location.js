@@ -105,6 +105,7 @@ module.exports = (sequelize, DataTypes) => {
 		}
 	}
 	const options = {
+		doNotSync: true,
 		scopes: {
 			defaultScope: {
 				attributes: [

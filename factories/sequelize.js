@@ -7,7 +7,6 @@ const Umzug = require('umzug')
 const defaultModelsDir = path.resolve(__dirname, '../models')
 
 function filterFile(file) {
-	console.log(file.indexOf('.'))
 	const didFilter = file.indexOf('.') !== 0 && file !== 'index.js'
 	if (!didFilter) {
 		console.warn(`Filtered file from sequelize import() model %s`, file)
@@ -25,35 +24,27 @@ module.exports = (
 		operatorsAliases: false,
 		...{ ...options, dialect: database.dialect }
 	}
-	const sequelizeCore = new Sequelize(database.core, sqlOptions)
-	const sequelize = new Sequelize(database.skill, sqlOptions)
+	const sequelize = new Sequelize(database.url, sqlOptions)
 	const coreModels = fs
 		.readdirSync(defaultModelsDir)
 		.filter(filterFile)
 		.map(file => path.resolve(defaultModelsDir, file))
-		.reduce((models, file) => {
-			var model = sequelizeCore.import(file)
-			models[model.name] = model
-			debug('Imported core Model: ', model.name)
-			return models
-		}, {})
 
-	let skillModels = {}
+	let skillModels = []
 	if (fs.existsSync(modelsDir)) {
 		skillModels = fs
 			.readdirSync(modelsDir)
 			.filter(filterFile)
 			.map(file => path.resolve(modelsDir, file))
-			.reduce((models, file) => {
-				var model = sequelize.import(file)
-				models[model.name] = model
-				debug('Imported Skill Model: ', model.name)
-				return models
-			}, {})
 	}
 
 	// All models available together <3
-	const models = { ...coreModels, skillModels }
+	const models = coreModels.concat(skillModels).reduce((models, file) => {
+		var model = sequelize.import(file)
+		models[model.name] = model
+		debug('Imported Skill Model: ', model.name)
+		return models
+	}, {})
 
 	Object.keys(models).forEach(function(modelName) {
 		if (models[modelName].hasOwnProperty('associate')) {
@@ -63,10 +54,19 @@ module.exports = (
 
 	// We should only run sync() on the skill db.
 	// Core handles it's own migrations
-	const baseSync = sequelize.sync
+	// So don't run migrations on any model relies on core db
 	async function sync() {
-		// Wait for original sequelize.sync()
-		await baseSync.apply(sequelize, arguments)
+		const coreModelNames = coreModels.map(file => path.basename(file, '.js')) // ['User', 'Location', 'UserLocation']
+		const filteredModels = []
+		Object.keys(models).forEach(key => {
+			const model = models[key]
+			if (!model.options.doNotSync) {
+				debug('Allowing this model to sync()', model.name)
+				filteredModels.push(model)
+			}
+		})
+
+		await Sequelize.Promise.each(filteredModels, model => model.sync())
 
 		// Run migrations if enabled
 		if (runMigrations && fs.existsSync(migrationsDir)) {
@@ -95,8 +95,5 @@ module.exports = (
 		}
 	}
 
-	// Ours includes migrations now
-	sequelize.sync = sync
-
-	ctx[key] = { models, sequelize }
+	ctx[key] = { models, sequelize, sync }
 }

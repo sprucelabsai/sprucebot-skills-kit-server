@@ -54,7 +54,7 @@ module.exports = async ({
 		console.error(
 			`Failed to sync your skill's settings with ${sprucebot.https.host}`
 		)
-		console.error(err)
+		throw err // Server can't really start without sync settings
 	})
 
 	debug('Sync complete. Response: ', syncResponse)
@@ -130,8 +130,8 @@ module.exports = async ({
 			)
 			debug('Kit sequelize enabled')
 
-			// Connect and run migrations
-			await koa.context.db.sequelize.sync()
+			// Connect and run migrations if enabled
+			await koa.context.db.sync()
 
 			// Services and utils can access the orm
 			_.each(koa.context.utilities, util => {

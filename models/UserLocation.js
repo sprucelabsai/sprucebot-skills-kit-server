@@ -64,6 +64,7 @@ module.exports = (sequelize, DataTypes) => {
 		}
 	}
 	const options = {
+		doNotSync: true,
 		classMethods: {
 			associate(models) {
 				this.belongsTo(models.User)
