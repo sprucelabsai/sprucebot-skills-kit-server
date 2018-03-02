@@ -1,5 +1,4 @@
 const modelName = 'User'
-
 module.exports = (sequelize, DataTypes) => {
 	const attributes = {
 		id: {
@@ -30,28 +29,30 @@ module.exports = (sequelize, DataTypes) => {
 			}
 		},
 		name: {
-			type: DataTypes.VIRTUAL
-			// get() {
-			// 	let name = lthr.lang.getText('Friend')
-			// 	if (firstName) {
-			// 		name = firstName
+			type: DataTypes.VIRTUAL,
+			get() {
+				// let name = lthr.lang.getText('Friend')
+				let name = 'Friend' // Todo use getText for this value
+				if (firstName) {
+					name = firstName
 
-			// 		if (lastName && lastName.length > 0) {
-			// 			name += ` ${lastName}`
-			// 		}
-			// 	}
-			// 	return name
-			// }
+					if (lastName && lastName.length > 0) {
+						name += ` ${lastName}`
+					}
+				}
+				return name
+			}
 		},
 		casualName: {
-			type: DataTypes.VIRTUAL
-			// get() {
-			// 	let name = lthr.lang.getText('Friend')
-			// 	if (firstName) {
-			// 		name = firstName
-			// 	}
-			// 	return name
-			// }
+			type: DataTypes.VIRTUAL,
+			get() {
+				// let name = lthr.lang.getText('Friend')
+				let name = 'Friend' // Todo use getText for this value
+				if (firstName) {
+					name = firstName
+				}
+				return name
+			}
 		},
 		phoneNumber: {
 			type: DataTypes.STRING,
@@ -60,18 +61,6 @@ module.exports = (sequelize, DataTypes) => {
 			unique: {
 				args: true,
 				msg: 'Phone number already associated with another account'
-			}
-		},
-		type: {
-			type: DataTypes.STRING,
-			defaultValue: 'regular',
-			comment: 'The base user type.',
-			allowNull: false,
-			validate: {
-				isIn: {
-					args: [['regular', 'superuser']],
-					msg: 'Must be user type of regular or superuser'
-				}
 			}
 		},
 		profileImageUUID: {
@@ -91,25 +80,6 @@ module.exports = (sequelize, DataTypes) => {
 			get() {
 				return null
 			}
-		},
-		superuser: {
-			type: DataTypes.BOOLEAN,
-			comment:
-				'Whether the user should have access to system administration functions.',
-			allowNull: false,
-			defaultValue: false
-		},
-		snsEndpointArn: {
-			type: DataTypes.STRING
-		},
-		snsMobilePlatform: {
-			type: DataTypes.STRING
-		},
-		snsDeviceToken: {
-			type: DataTypes.STRING
-		},
-		socketId: {
-			type: DataTypes.STRING
 		}
 	}
 	const options = {
