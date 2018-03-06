@@ -40,13 +40,14 @@ module.exports = (sequelize, DataTypes) => {
 		}
 	}
 	const options = {
-		doNotSync: true,
-		classMethods: {
-			associate(models) {
-				this.belongsTo(models.User)
-				this.belongsTo(models.Location)
-			}
-		}
+		doNotSync: true
 	}
-	return sequelize.define(modelName, attributes, options)
+	const UserLocation = sequelize.define(modelName, attributes, options)
+
+	UserLocation.associate = function(models) {
+		this.belongsTo(models.User)
+		this.belongsTo(models.Location)
+	}
+
+	return UserLocation
 }

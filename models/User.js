@@ -33,11 +33,11 @@ module.exports = (sequelize, DataTypes) => {
 			get() {
 				// let name = lthr.lang.getText('Friend')
 				let name = 'Friend' // Todo use getText for this value
-				if (firstName) {
-					name = firstName
+				if (this.firstName) {
+					name = this.firstName
 
-					if (lastName && lastName.length > 0) {
-						name += ` ${lastName}`
+					if (this.lastName && this.lastName.length > 0) {
+						name += ` ${this.lastName}`
 					}
 				}
 				return name
@@ -48,8 +48,8 @@ module.exports = (sequelize, DataTypes) => {
 			get() {
 				// let name = lthr.lang.getText('Friend')
 				let name = 'Friend' // Todo use getText for this value
-				if (firstName) {
-					name = firstName
+				if (this.firstName) {
+					name = this.firstName
 				}
 				return name
 			}
@@ -95,14 +95,14 @@ module.exports = (sequelize, DataTypes) => {
 				'defaultProfileImages',
 				'casualName'
 			]
-		},
-		classMethods: {
-			associate(models) {
-				this.belongsToMany(models.Location, {
-					through: 'UserLocation'
-				})
-			}
 		}
 	}
-	return sequelize.define(modelName, attributes, options)
+	const User = sequelize.define(modelName, attributes, options)
+
+	User.associate = function(models) {
+		this.belongsToMany(models.Location, {
+			through: 'UserLocation'
+		})
+	}
+	return User
 }
