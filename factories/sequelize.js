@@ -66,7 +66,7 @@ module.exports = (
 			}
 		})
 
-		await Sequelize.Promise.each(filteredModels, model => model.sync())
+		await sequelize.sync()
 
 		// Run migrations if enabled
 		if (runMigrations && fs.existsSync(migrationsDir)) {
